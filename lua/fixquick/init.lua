@@ -1,13 +1,24 @@
+--- A Neovim plugin to make the quickfix list modifiable and persist changes.
+-- @module fixquick
+local M = {}
+
+--- Autogroup name for the plugin's autocmds.
 local augroup_name = "Fixquick"
 local augroup = vim.api.nvim_create_augroup(augroup_name, {})
 
-local function make_buffer_modifiable()
+--- Makes the current buffer modifiable and clears the modified flag.
+function M.make_buffer_modifiable()
   vim.cmd "setlocal modifiable"
   vim.cmd "setlocal nomodified"
 end
 
---- @param args table
-local function on_quickfix_write(args)
+--- Updates the quickfix list based on the saved temporary file.
+--- This function is called after the temporary file associated with the quickfix buffer is written.
+--- @param args table The arguments table with the 'file' key containing the path to the temporary file.
+function M.on_quickfix_write(args)
+  -- Validate args and ensure 'file' key exists.
+  assert(type(args) == "table" and args.file, "on_quickfix_write: Invalid args or missing 'file' key")
+
   local file = args.file
   local file_contents = vim.fn.readfile(file)
   local quickfix_entries = vim.fn.getqflist()
@@ -26,29 +37,38 @@ local function on_quickfix_write(args)
     end
   end
 
-  -- Replace the current quickfix list with the new one
   vim.fn.setqflist({}, "r", { items = new_qf_list })
-  make_buffer_modifiable()
+  M.make_buffer_modifiable()
 end
 
-local function on_quickfix_enter()
+--- Sets up the environment for editing the quickfix list when entering the quickfix window.
+--- It writes the current quickfix list to a temporary file and sets up an autocmd to handle saving changes.
+function M.on_quickfix_enter()
   if vim.bo.buftype == "quickfix" then
     local bufnr = vim.api.nvim_get_current_buf()
-    local name = "/tmp/quickfix-" .. bufnr -- Naming the buffer allows us to save it as a file
+    local temp_file = "/tmp/quickfix-" .. bufnr
 
-    vim.cmd("silent write! " .. name)
-    make_buffer_modifiable()
+    vim.cmd("silent write! " .. temp_file)
+    M.make_buffer_modifiable()
+
     vim.api.nvim_create_autocmd("BufWritePost", {
       group = augroup,
       buffer = bufnr,
-      callback = on_quickfix_write,
+      callback = function()
+        M.on_quickfix_write { file = temp_file }
+      end,
     })
   end
 end
 
-vim.api.nvim_create_autocmd("BufReadPost", {
-  group = augroup,
-  pattern = "quickfix",
-  callback = on_quickfix_enter,
-  nested = true,
-})
+--- Initializes the plugin by setting up an autocmd for entering the quickfix window.
+function M.setup()
+  vim.api.nvim_create_autocmd("BufReadPost", {
+    group = augroup,
+    pattern = "quickfix",
+    callback = M.on_quickfix_enter,
+    nested = true,
+  })
+end
+
+return M

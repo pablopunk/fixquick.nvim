@@ -27,6 +27,9 @@ Using *lazy.nvim*:
 ```lua
 {
   "pablopunk/fixquick.nvim",
-  event = "BufEnter"
+  event = "BufEnter",
+  config = true
 }
 ```
+
+Don't forget to call `require('fixquick').setup()`. In lazy, `config = true` is enough.
