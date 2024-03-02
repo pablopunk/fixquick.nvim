@@ -16,23 +16,21 @@ end
 --- This function is called after the temporary file associated with the quickfix buffer is written.
 --- @param args table The arguments table with the 'file' key containing the path to the temporary file.
 function M.on_quickfix_write(args)
-  -- Validate args and ensure 'file' key exists.
   assert(type(args) == "table" and args.file, "on_quickfix_write: Invalid args or missing 'file' key")
 
   local file = args.file
-  local file_contents = vim.fn.readfile(file)
+  local file_lines = vim.fn.readfile(file)
   local quickfix_entries = vim.fn.getqflist()
   local new_qf_list = {}
 
   for _, entry in ipairs(quickfix_entries) do
-    local found = false
-    for _, line in ipairs(file_contents) do
-      if line:find(entry.text) then
-        found = true
-        break
-      end
-    end
-    if found then
+    local filename = entry.text
+
+    -- Construct a line format as it appears in the temporary file.
+    local expected_line = filename .. "|" .. entry.lnum .. " col " .. (entry.col or 0) .. "| " .. filename
+
+    -- Check if the constructed line exists in the concatenated file contents.
+    if vim.tbl_contains(file_lines, expected_line) then
       table.insert(new_qf_list, entry)
     end
   end
