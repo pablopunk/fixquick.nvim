@@ -37,7 +37,7 @@ local function on_quickfix_enter()
     local bufnr = vim.api.nvim_get_current_buf()
     local name = "/tmp/quickfix-" .. bufnr -- Naming the buffer allows us to save it as a file
 
-    vim.cmd("write! " .. name)
+    vim.cmd("silent write! " .. name)
     make_buffer_modifiable()
     vim.api.nvim_create_autocmd("BufWritePost", {
       group = augroup,
