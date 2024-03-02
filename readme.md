@@ -3,7 +3,7 @@
 > *Gain control of the contents of your quickfix list. Modify it, use it, save it.*
 
 > [!IMPORTANT]
-> This is a work in progress.
+> This is a work in progress. If you find any issues, please [report them](https://github.com/pablopunk/fixquick.nvim/issues/new).
 
 
 ## The problem
