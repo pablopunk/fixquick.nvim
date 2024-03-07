@@ -24,14 +24,24 @@ function M.on_quickfix_write(args)
   local new_qf_list = {}
 
   for _, entry in ipairs(quickfix_entries) do
-    local filename = entry.text
+    local entry_text = entry.text
 
-    -- Construct a line format as it appears in the temporary file.
-    local expected_line = filename .. "|" .. entry.lnum .. " col " .. (entry.col or 0) .. "| " .. filename
+    -- vim will truncate the text if it's too long
+    if #entry_text > 180 then
+      entry_text = string.sub(entry_text, 1, 180)
+    end
 
-    -- Check if the constructed line exists in the concatenated file contents.
-    if vim.tbl_contains(file_lines, expected_line) then
-      table.insert(new_qf_list, entry)
+    local search_in_line = "|" .. entry.lnum .. " col " .. (entry.col or 0) .. "| " .. entry_text
+
+    search_in_line = string.gsub(search_in_line, "|%s+", "| ") -- remove leading whitespace
+
+    for _, line in ipairs(file_lines) do
+      line = string.gsub(line, "^[^|]+|", "|") -- remove the file name
+      line = string.gsub(line, "|%s+", "| ") -- remove leading whitespace
+      if string.find(line, search_in_line, 1, true) then
+        table.insert(new_qf_list, entry)
+        break
+      end
     end
   end
 
