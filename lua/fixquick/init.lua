@@ -50,13 +50,13 @@ local autocmds_created = {}
 function M.on_quickfix_enter()
   if vim.bo.buftype == "quickfix" then
     local bufnr = vim.api.nvim_get_current_buf()
+    M.make_buffer_modifiable()
 
     -- Check if the autocmd has already been created for this buffer
     if not autocmds_created[bufnr] then
       local temp_file = "/tmp/quickfix-" .. bufnr
 
       vim.cmd("silent write! " .. temp_file)
-      M.make_buffer_modifiable()
 
       -- Create the BufWritePost autocmd for this buffer
       vim.api.nvim_create_autocmd("BufWritePost", {
