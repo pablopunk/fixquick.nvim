@@ -73,13 +73,25 @@ function M.on_quickfix_enter()
   end
 end
 
-function M.setup()
+local function create_autocmds()
   vim.api.nvim_create_autocmd("BufReadPost", {
     group = augroup,
     pattern = "quickfix",
     callback = M.on_quickfix_enter,
     nested = true,
   })
+end
+
+local function remove_autocmds()
+  vim.api.nvim_clear_autocmds { group = augroup }
+end
+
+function M.setup()
+  create_autocmds()
+end
+
+function M.disable()
+  remove_autocmds()
 end
 
 return M

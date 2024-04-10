@@ -33,3 +33,9 @@ Using *lazy.nvim*:
 ```
 
 Don't forget to call `require('fixquick').setup()`. In lazy, `config = true` is enough.
+
+## Utils
+
+```lua
+require('fixquick').disable() -- disable plugin
+```
