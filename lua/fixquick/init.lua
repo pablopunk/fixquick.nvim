@@ -30,38 +30,30 @@ function M.on_quickfix_write(args)
   file_lines = vim.tbl_filter(function(line)
     return not line:match "^%s*$" -- Remove empty lines
   end, file_lines)
-  local current_qf = vim.fn.getqflist()
   local new_qf_list = {}
 
   for _, line in ipairs(file_lines) do
     local parts = vim.split(line, "|")
     local entry_text = parts[3]
-
     entry_text = entry_text:gsub("^%s+", "")
+    local entry_file = parts[1]
 
-    local entry_in_current_qf = vim.tbl_filter(function(entry)
-      local entry_text_to_compare = entry.text:gsub("^%s+", "")
-      return entry_text_to_compare == entry_text
-    end, current_qf)
+    local new_entry = {
+      bufnr = vim.fn.bufadd(entry_file),
+      col = tonumber(parts[2]:match "col (%d+)"),
+      end_col = 0,
+      end_lnum = 0,
+      lnum = tonumber(parts[2]:match "(%d+) col"),
+      module = entry_file,
+      nr = 0,
+      pattern = "",
+      text = entry_text,
+      type = "",
+      valid = 1,
+      vcol = 0,
+    }
 
-    if #entry_in_current_qf > 0 then
-      local new_entry = {
-        bufnr = entry_in_current_qf[1].bufnr,
-        col = tonumber(parts[2]:match "col (%d+)"),
-        end_col = 0,
-        end_lnum = 0,
-        lnum = tonumber(parts[2]:match "(%d+) col"),
-        module = parts[1],
-        nr = 0,
-        pattern = "",
-        text = entry_text,
-        type = "",
-        valid = 1,
-        vcol = 0,
-      }
-
-      table.insert(new_qf_list, new_entry)
-    end
+    table.insert(new_qf_list, new_entry)
   end
 
   vim.fn.setqflist({}, "r", { items = new_qf_list })
