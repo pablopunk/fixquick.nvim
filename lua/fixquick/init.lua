@@ -32,6 +32,10 @@ function M.on_quickfix_write(args)
   end, file_lines)
   local new_qf_list = {}
 
+  -- Capture the current cursor position in the quickfix window
+  local winid = vim.fn.getqflist({ winid = 0 }).winid
+  local cursor_pos = vim.api.nvim_win_get_cursor(winid)
+
   for _, line in ipairs(file_lines) do
     local parts = vim.split(line, "|")
     local entry_text = parts[3]
@@ -57,14 +61,19 @@ function M.on_quickfix_write(args)
   end
 
   vim.fn.setqflist({}, "r", { items = new_qf_list })
+
+  -- Restore the cursor position
+  if vim.api.nvim_win_is_valid(winid) then
+    vim.api.nvim_win_set_cursor(winid, cursor_pos)
+  end
 end
 
 -- Keep track of the autocmds created for each buffer, so we don't create them again
 local autocmds_created = {}
 function M.on_quickfix_enter()
-  M.make_buffer_modifiable(bufnr)
   if vim.bo.buftype == "quickfix" then
     local bufnr = vim.api.nvim_get_current_buf()
+    M.make_buffer_modifiable(bufnr)
 
     -- Check if the autocmd has already been created for this buffer
     if not autocmds_created[bufnr] then
