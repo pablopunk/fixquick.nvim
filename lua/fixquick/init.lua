@@ -5,7 +5,9 @@ local M = {}
 local augroup_name = "Fixquick"
 local augroup = vim.api.nvim_create_augroup(augroup_name, {})
 
--- Helper function to defer function execution
+--- Helper function to defer function execution
+--- @param fn function The function to defer
+--- @return function The deferred function
 local function async_fn(fn)
   return function(...)
     local args = { ... }
@@ -15,14 +17,17 @@ local function async_fn(fn)
   end
 end
 
--- Set buffer options to make it modifiable
+--- Set buffer options to make it modifiable
+--- @param bufnr number The buffer number to make modifiable
 function M.make_buffer_modifiable(bufnr)
   vim.api.nvim_set_option_value("modifiable", true, { buf = bufnr })
   vim.api.nvim_set_option_value("modified", false, { buf = bufnr })
 end
 
--- Parse quickfix line into a quickfix entry table
-local function parse_qf_line(line)
+--- Parse quickfix line into a quickfix entry table
+--- @param line string The quickfix line to parse
+--- @return table entry The parsed quickfix entry
+local function qf_line_to_entry(line)
   local parts = vim.split(line, "|")
   local entry_text = parts[3]:gsub("^%s+", "")
   local entry_file = parts[1]
@@ -43,7 +48,8 @@ local function parse_qf_line(line)
   }
 end
 
--- Update quickfix list from a file
+--- Update quickfix list from a file
+--- @param args table The arguments table with the 'file' key containing the path to the temporary file
 function M.on_quickfix_write(args)
   assert(type(args) == "table" and args.file, "on_quickfix_write: Invalid args or missing 'file' key")
 
@@ -52,7 +58,7 @@ function M.on_quickfix_write(args)
   local qf_list = vim.tbl_filter(function(line)
     return not line:match "^%s*$"
   end, file_lines)
-  local new_qf_list = vim.tbl_map(parse_qf_line, qf_list)
+  local new_qf_list = vim.tbl_map(qf_line_to_entry, qf_list)
 
   local winid = vim.fn.getqflist({ winid = 0 }).winid
   local cursor_pos = vim.api.nvim_win_get_cursor(winid)
@@ -66,7 +72,7 @@ end
 
 local autocmds_created = {}
 
--- Initialize quickfix buffer on enter
+--- Initialize quickfix buffer on enter
 function M.on_quickfix_enter()
   if vim.bo.buftype == "quickfix" then
     local bufnr = vim.api.nvim_get_current_buf()
@@ -77,7 +83,8 @@ function M.on_quickfix_enter()
   end
 end
 
--- Setup autocmd for a specific buffer
+--- Setup autocmd for a specific buffer
+--- @param bufnr number The buffer number
 function M.setup_autocmds_for_buffer(bufnr)
   local temp_file = "/tmp/quickfix-" .. bufnr
   vim.cmd("silent write! " .. temp_file)
@@ -95,7 +102,7 @@ function M.setup_autocmds_for_buffer(bufnr)
   autocmds_created[bufnr] = true
 end
 
--- Register autocmds on plugin load
+--- Register autocmds on plugin load
 local function create_autocmds()
   vim.api.nvim_create_autocmd("BufReadPost", {
     group = augroup,
@@ -105,7 +112,7 @@ local function create_autocmds()
   })
 end
 
--- Clear autocmds when disabling the plugin
+--- Clear autocmds when disabling the plugin
 local function remove_autocmds()
   vim.api.nvim_clear_autocmds { group = augroup }
 end
