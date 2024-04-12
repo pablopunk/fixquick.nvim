@@ -1,4 +1,4 @@
---- A Neovim plugin to make the quickfix list modifiable and persist changes.
+--- A Neovim plugin to make the quickfix list modifiable and persist changes
 --- @class fixquick
 local fixquick = {}
 
