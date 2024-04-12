@@ -1,0 +1,11 @@
+async_fn()	fixquick.txt	/*async_fn()*
+create_autocmds()	fixquick.txt	/*create_autocmds()*
+fixquick	fixquick.txt	/*fixquick*
+fixquick.disable()	fixquick.txt	/*fixquick.disable()*
+fixquick.make_buffer_modifiable()	fixquick.txt	/*fixquick.make_buffer_modifiable()*
+fixquick.on_quickfix_enter()	fixquick.txt	/*fixquick.on_quickfix_enter()*
+fixquick.on_quickfix_write()	fixquick.txt	/*fixquick.on_quickfix_write()*
+fixquick.setup()	fixquick.txt	/*fixquick.setup()*
+fixquick.setup_autocmds_for_buffer()	fixquick.txt	/*fixquick.setup_autocmds_for_buffer()*
+qf_line_to_entry()	fixquick.txt	/*qf_line_to_entry()*
+remove_autocmds()	fixquick.txt	/*remove_autocmds()*

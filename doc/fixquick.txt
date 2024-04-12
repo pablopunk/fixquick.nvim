@@ -1,0 +1,66 @@
+==============================================================================
+------------------------------------------------------------------------------
+                                                                      *fixquick*
+                                   `fixquick`
+A Neovim plugin to make the quickfix list modifiable and persist changes.
+@class fixquick
+
+------------------------------------------------------------------------------
+                                                                    *async_fn()*
+                                `async_fn`({fn})
+Helper function to defer function execution
+@param fn function The function to defer
+@return function The deferred function
+
+------------------------------------------------------------------------------
+                                             *fixquick.make_buffer_modifiable()*
+                   `fixquick.make_buffer_modifiable`({bufnr})
+Set buffer options to make it modifiable
+@param bufnr number The buffer number to make modifiable
+
+------------------------------------------------------------------------------
+                                                            *qf_line_to_entry()*
+                           `qf_line_to_entry`({line})
+Parse quickfix line into a quickfix entry table
+@param line string The quickfix line to parse
+@return table entry The parsed quickfix entry
+
+------------------------------------------------------------------------------
+                                                  *fixquick.on_quickfix_write()*
+                      `fixquick.on_quickfix_write`({args})
+Update quickfix list from a file
+@param args table The arguments table with the 'file' key containing the path to the temporary file
+
+------------------------------------------------------------------------------
+                                                  *fixquick.on_quickfix_enter()*
+                         `fixquick.on_quickfix_enter`()
+Initialize quickfix buffer on enter
+
+------------------------------------------------------------------------------
+                                          *fixquick.setup_autocmds_for_buffer()*
+                 `fixquick.setup_autocmds_for_buffer`({bufnr})
+Setup autocmd for a specific buffer
+@param bufnr number The buffer number
+
+------------------------------------------------------------------------------
+                                                             *create_autocmds()*
+                              `create_autocmds`()
+Register autocmds on plugin load
+
+------------------------------------------------------------------------------
+                                                             *remove_autocmds()*
+                              `remove_autocmds`()
+Clear autocmds when disabling the plugin
+
+------------------------------------------------------------------------------
+                                                              *fixquick.setup()*
+                               `fixquick.setup`()
+Setup the plugin
+
+------------------------------------------------------------------------------
+                                                            *fixquick.disable()*
+                              `fixquick.disable`()
+Disable the plugin
+
+
+ vim:tw=78:ts=8:noet:ft=help:norl:

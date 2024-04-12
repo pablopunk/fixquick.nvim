@@ -1,6 +1,6 @@
 --- A Neovim plugin to make the quickfix list modifiable and persist changes.
---- @module fixquick
-local M = {}
+--- @class fixquick
+local fixquick = {}
 
 local augroup_name = "Fixquick"
 local augroup = vim.api.nvim_create_augroup(augroup_name, {})
@@ -19,7 +19,7 @@ end
 
 --- Set buffer options to make it modifiable
 --- @param bufnr number The buffer number to make modifiable
-function M.make_buffer_modifiable(bufnr)
+function fixquick.make_buffer_modifiable(bufnr)
   vim.api.nvim_set_option_value("modifiable", true, { buf = bufnr })
   vim.api.nvim_set_option_value("modified", false, { buf = bufnr })
 end
@@ -50,7 +50,7 @@ end
 
 --- Update quickfix list from a file
 --- @param args table The arguments table with the 'file' key containing the path to the temporary file
-function M.on_quickfix_write(args)
+function fixquick.on_quickfix_write(args)
   assert(type(args) == "table" and args.file, "on_quickfix_write: Invalid args or missing 'file' key")
 
   local file = args.file
@@ -73,24 +73,24 @@ end
 local autocmds_created = {}
 
 --- Initialize quickfix buffer on enter
-function M.on_quickfix_enter()
+function fixquick.on_quickfix_enter()
   if vim.bo.buftype == "quickfix" then
     local bufnr = vim.api.nvim_get_current_buf()
-    M.make_buffer_modifiable(bufnr)
+    fixquick.make_buffer_modifiable(bufnr)
     if not autocmds_created[bufnr] then
-      M.setup_autocmds_for_buffer(bufnr)
+      fixquick.setup_autocmds_for_buffer(bufnr)
     end
   end
 end
 
 --- Setup autocmd for a specific buffer
 --- @param bufnr number The buffer number
-function M.setup_autocmds_for_buffer(bufnr)
+function fixquick.setup_autocmds_for_buffer(bufnr)
   local temp_file = "/tmp/quickfix-" .. bufnr
   vim.cmd("silent write! " .. temp_file)
 
   local function callback()
-    async_fn(M.on_quickfix_write) { file = temp_file }
+    async_fn(fixquick.on_quickfix_write) { file = temp_file }
   end
 
   vim.api.nvim_create_autocmd("BufWritePost", {
@@ -107,7 +107,7 @@ local function create_autocmds()
   vim.api.nvim_create_autocmd("BufReadPost", {
     group = augroup,
     pattern = "quickfix",
-    callback = M.on_quickfix_enter,
+    callback = fixquick.on_quickfix_enter,
     nested = true,
   })
 end
@@ -117,12 +117,14 @@ local function remove_autocmds()
   vim.api.nvim_clear_autocmds { group = augroup }
 end
 
-function M.setup()
+--- Setup the plugin
+function fixquick.setup()
   create_autocmds()
 end
 
-function M.disable()
+--- Disable the plugin
+function fixquick.disable()
   remove_autocmds()
 end
 
-return M
+return fixquick
