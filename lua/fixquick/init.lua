@@ -1,13 +1,24 @@
 --- A Neovim plugin to make the quickfix list modifiable and persist changes.
----@module fixquick
+--- @module fixquick
 local M = {}
 
 local augroup_name = "Fixquick"
 local augroup = vim.api.nvim_create_augroup(augroup_name, {})
 
-function M.make_buffer_modifiable()
-  vim.cmd "setlocal modifiable"
-  vim.cmd "setlocal nomodified"
+local function async_fn(fn)
+  return function(...)
+    local args = { ... }
+    vim.defer_fn(function()
+      fn(unpack(args))
+    end, 0)
+  end
+end
+
+--- Make the buffer modifiable
+--- @param bufnr number The buffer number to make modifiable
+function M.make_buffer_modifiable(bufnr)
+  vim.api.nvim_set_option_value("modifiable", true, { buf = bufnr })
+  vim.api.nvim_set_option_value("modified", false, { buf = bufnr })
 end
 
 --- @param args table The arguments table with the 'file' key containing the path to the temporary file.
@@ -16,41 +27,52 @@ function M.on_quickfix_write(args)
 
   local file = args.file
   local file_lines = vim.fn.readfile(file)
-  local quickfix_entries = vim.fn.getqflist()
+  file_lines = vim.tbl_filter(function(line)
+    return not line:match "^%s*$" -- Remove empty lines
+  end, file_lines)
+  local current_qf = vim.fn.getqflist()
   local new_qf_list = {}
 
-  for _, entry in ipairs(quickfix_entries) do
-    local entry_text = entry.text
+  for _, line in ipairs(file_lines) do
+    local parts = vim.split(line, "|")
+    local entry_text = parts[3]
 
-    -- vim will truncate the text if it's too long
-    if #entry_text > 180 then
-      entry_text = string.sub(entry_text, 1, 180)
-    end
+    entry_text = entry_text:gsub("^%s+", "")
 
-    local search_in_line = "|" .. entry.lnum .. " col " .. (entry.col or 0) .. "| " .. entry_text
+    local entry_in_current_qf = vim.tbl_filter(function(entry)
+      local entry_text_to_compare = entry.text:gsub("^%s+", "")
+      return entry_text_to_compare == entry_text
+    end, current_qf)
 
-    search_in_line = string.gsub(search_in_line, "|%s+", "| ") -- remove leading whitespace
+    if #entry_in_current_qf > 0 then
+      local new_entry = {
+        bufnr = entry_in_current_qf[1].bufnr,
+        col = tonumber(parts[2]:match "col (%d+)"),
+        end_col = 0,
+        end_lnum = 0,
+        lnum = tonumber(parts[2]:match "(%d+) col"),
+        module = parts[1],
+        nr = 0,
+        pattern = "",
+        text = entry_text,
+        type = "",
+        valid = 1,
+        vcol = 0,
+      }
 
-    for _, line in ipairs(file_lines) do
-      line = string.gsub(line, "^[^|]+|", "|") -- remove the file name
-      line = string.gsub(line, "|%s+", "| ") -- remove leading whitespace
-      if string.find(line, search_in_line, 1, true) then
-        table.insert(new_qf_list, entry)
-        break
-      end
+      table.insert(new_qf_list, new_entry)
     end
   end
 
   vim.fn.setqflist({}, "r", { items = new_qf_list })
-  M.make_buffer_modifiable()
 end
 
 -- Keep track of the autocmds created for each buffer, so we don't create them again
 local autocmds_created = {}
 function M.on_quickfix_enter()
+  M.make_buffer_modifiable(bufnr)
   if vim.bo.buftype == "quickfix" then
     local bufnr = vim.api.nvim_get_current_buf()
-    M.make_buffer_modifiable()
 
     -- Check if the autocmd has already been created for this buffer
     if not autocmds_created[bufnr] then
@@ -63,7 +85,7 @@ function M.on_quickfix_enter()
         group = augroup,
         buffer = bufnr,
         callback = function()
-          M.on_quickfix_write { file = temp_file }
+          async_fn(M.on_quickfix_write) { file = temp_file }
         end,
       })
 
